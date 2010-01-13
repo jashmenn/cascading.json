@@ -83,4 +83,28 @@ public class JSONTupleAggregatorTestCase extends CascadingTestCase {
      assertEquals(msg, "[[\"zoo\",\"sed\"],[\"zed\",\"soo\"],[\"bff\",\"\"],[\"\",\"3\"]]", t.getString(0));
    }
 
+   @Test
+   public void test_group_tuple_as_object() {
+     Tuple[] arguments = new Tuple[]{
+       new Tuple("foo","bar"),
+       new Tuple("zab","baz"),
+       new Tuple("bing","bam")};
+
+     Aggregator aggregator = new JSONTupleAggregator( new Fields("group"), "JSONObject" );
+
+     Fields resultFields = new Fields("group");
+     TupleListCollector resultEntryCollector = invokeAggregator(aggregator, arguments, resultFields);
+     Iterator<Tuple> iterator = resultEntryCollector.iterator();
+
+     Tuple t;
+     String msg = "JSONTupleAggregator test failed";
+
+     assertEquals(msg, 1, resultEntryCollector.size());
+
+     t = iterator.next(); 
+     assertEquals(msg, "{\"foo\":\"bar\",\"zab\":\"baz\",\"bing\":\"bam\"}", t.getString(0));
+   }
+
+
+
 }

@@ -19,7 +19,7 @@ import cascading.tuple.TupleEntry;
 
 /**
  * JSONTupleAggregator: 
- *    groups input tuples into a json string. e.g.
+ *    groups input tuples into a json string as either a JSONArray or JSONObject e.g.
  *
  * {@code}
  *    input:
@@ -28,73 +28,94 @@ import cascading.tuple.TupleEntry;
  *      (bam, baz))
  * 
  *    emits:
- *    (a, '["foo","bar"],["foo","baz"]')
+ *    (a, '["foo","bar"],["bam","baz"]')
+ *    or:
+ *    (a, '{"foo":"bar","bam":"baz"}')
  * 
  * {code}
+ * 
+ * Note that using a JSONObject will clobber any repeat keys. However using
+ * JSONArray will keep duplicates.
  *
  * @author <a href="mailto:nate@natemurray.com">Nate Murray</a>
  */
 
-public class JSONTupleAggregator extends BaseOperation<JSONTupleAggregator.Context> implements Aggregator<JSONTupleAggregator.Context>
+public class JSONTupleAggregator extends BaseOperation<Object> implements Aggregator<Object>
   {
-  /** Class Context is used to hold intermediate values. */
-  protected static class Context
-    {
-    JSONArray json;
+    private static final String DEFAULT_FORMAT = "JSONArray";
+    private String format;
 
-    public Context() 
-      {
-        this.reset();
-      }
+  // [>* Class Context is used to hold intermediate values. <]
+  // protected static class Context
+  //   {
+  //   JSONArray json;
 
-    public Context reset()
-      {
-      this.json = new JSONArray();
-      return this;
-      }
-    }
+  //   public Context() 
+  //     {
+  //       this.reset();
+  //     }
+
+  //   public Context reset()
+  //     {
+  //     this.json = new JSONArray();
+  //     return this;
+  //     }
+  //   }
 
   /**
-   * Constructs a new instance that returns the average of the values encoutered in the given fieldDeclaration field name.
-   *
    * @param fieldDeclaration of type Fields
+   * @param format String denoting the format of the JSON. Either "JSONArray" or "JSONObject"
    */
-  public JSONTupleAggregator( Fields fieldDeclaration )
+  public JSONTupleAggregator( Fields fieldDeclaration, String format )
     {
     super( 1, fieldDeclaration );
 
     if( !fieldDeclaration.isSubstitution() && fieldDeclaration.size() != 1 )
       throw new IllegalArgumentException( "fieldDeclaration may only declare 1 field, got: " + fieldDeclaration.size() );
+    this.format = format;
     }
 
-  public void start( FlowProcess flowProcess, AggregatorCall<Context> aggregatorCall )
+  /**
+   * @param fieldDeclaration of type Fields
+   */
+  public JSONTupleAggregator( Fields fieldDeclaration )
     {
-    if( aggregatorCall.getContext() != null )
-      aggregatorCall.getContext().reset();
-    else
-      aggregatorCall.setContext( new Context() );
+      this( fieldDeclaration, DEFAULT_FORMAT ); 
     }
 
-  public void aggregate( FlowProcess flowProcess, AggregatorCall<Context> aggregatorCall )
+  public void start( FlowProcess flowProcess, AggregatorCall<Object> aggregatorCall )
     {
-      Context context = aggregatorCall.getContext();
-      TupleEntry arguments = aggregatorCall.getArguments();
-      Tuple tuple = arguments.getTuple();
-      JSONArray tupie = new JSONArray();
-      for ( int i=0; i< tuple.size(); i++ ) {
-        tupie.element( tuple.getString( i ) );
+      Object context = this.format.equals("JSONObject") ? new JSONObject() : new JSONArray(); 
+      aggregatorCall.setContext( context );
+    }
+
+  public void aggregate( FlowProcess flowProcess, AggregatorCall<Object> aggregatorCall )
+    {
+      if(this.format.equals("JSONObject")) {
+        JSONObject context = (JSONObject)aggregatorCall.getContext();
+        TupleEntry arguments = aggregatorCall.getArguments();
+        Tuple tuple = arguments.getTuple();
+        context.put(tuple.getString(0), tuple.getString(1));
+      } else {
+        JSONArray context = (JSONArray)aggregatorCall.getContext();
+        TupleEntry arguments = aggregatorCall.getArguments();
+        Tuple tuple = arguments.getTuple();
+        JSONArray tupie = new JSONArray();
+        for ( int i=0; i< tuple.size(); i++ ) {
+          tupie.element( tuple.getString( i ) );
+        }
+        context.element( JSONArray.toCollection( tupie ) );
       }
-      context.json.element( JSONArray.toCollection( tupie ) );
     }
 
-  public void complete( FlowProcess flowProcess, AggregatorCall<Context> aggregatorCall )
+  public void complete( FlowProcess flowProcess, AggregatorCall<Object> aggregatorCall )
     {
     aggregatorCall.getOutputCollector().add( getResult( aggregatorCall ) );
     }
 
-  private Tuple getResult( AggregatorCall<Context> aggregatorCall )
+  private Tuple getResult( AggregatorCall<Object> aggregatorCall )
     {
-    Context context = aggregatorCall.getContext();
-    return new Tuple( context.json.toString() );
+    Object context = aggregatorCall.getContext();
+    return new Tuple( context.toString() );
     }
   }
