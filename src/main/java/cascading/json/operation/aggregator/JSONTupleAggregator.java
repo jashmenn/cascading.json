@@ -45,23 +45,6 @@ public class JSONTupleAggregator extends BaseOperation<Object> implements Aggreg
     private static final String DEFAULT_FORMAT = "JSONArray";
     private String format;
 
-  // [>* Class Context is used to hold intermediate values. <]
-  // protected static class Context
-  //   {
-  //   JSONArray json;
-
-  //   public Context() 
-  //     {
-  //       this.reset();
-  //     }
-
-  //   public Context reset()
-  //     {
-  //     this.json = new JSONArray();
-  //     return this;
-  //     }
-  //   }
-
   /**
    * @param fieldDeclaration of type Fields
    * @param format String denoting the format of the JSON. Either "JSONArray" or "JSONObject"
