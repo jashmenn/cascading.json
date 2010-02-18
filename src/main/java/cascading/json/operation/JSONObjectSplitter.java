@@ -34,10 +34,14 @@ public class JSONObjectSplitter extends JSONOperation implements Function {
     String in = functionCall.getArguments().get(0).toString();
     JSONObject jsonObject = JSONObject.fromObject(in);
   
-    Iterator it = jsonObject.entrySet().iterator();
-    while (it.hasNext()) {
-        Map.Entry pair = (Map.Entry)it.next();
-        functionCall.getOutputCollector().add( new Tuple((String)pair.getKey(), (String)pair.getValue()) );
+    if(jsonObject.size() > 0) {
+      Iterator it = jsonObject.entrySet().iterator();
+      while (it.hasNext()) {
+          Map.Entry pair = (Map.Entry)it.next();
+          functionCall.getOutputCollector().add( new Tuple((String)pair.getKey(), (String)pair.getValue()) );
+      }
+    } else {
+      functionCall.getOutputCollector().add( new Tuple(null, null) );
     }
 
   }
