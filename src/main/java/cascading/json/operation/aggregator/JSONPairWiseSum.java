@@ -16,6 +16,8 @@ import cascading.operation.Aggregator;
 import cascading.operation.AggregatorCall;
 import cascading.operation.BaseOperation;
 import cascading.tuple.TupleEntry;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * JSONPairWiseSum: 
@@ -48,14 +50,6 @@ public class JSONPairWiseSum extends BaseOperation<Object> implements Aggregator
 
     if( !fieldDeclaration.isSubstitution() && fieldDeclaration.size() != 1 )
       throw new IllegalArgumentException( "fieldDeclaration may only declare 1 field, got: " + fieldDeclaration.size() );
-    }
-
-  /**
-   * @param fieldDeclaration of type Fields
-   */
-  public JSONPairWiseSum( Fields fieldDeclaration )
-    {
-      this( fieldDeclaration, DEFAULT_FORMAT ); 
     }
 
   public void start( FlowProcess flowProcess, AggregatorCall<Object> aggregatorCall )

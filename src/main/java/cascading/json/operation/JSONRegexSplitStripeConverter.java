@@ -16,6 +16,7 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * JSONRegexSplitStripeConverter 
